@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group 'training'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    flatDir{
+        dirs 'libs'
+    }
+}
+
+mainClassName ="robocode.Robocode"
+
+dependencies {
+    compile fileTree(dir:'libs',include:['*.jar'])
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
