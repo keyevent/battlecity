@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'application'
+
 }
 
 group 'training'
@@ -15,9 +15,22 @@ repositories {
     }
 }
 
-mainClassName ="robocode.Robocode"
 
 dependencies {
     compile fileTree(dir:'libs',include:['*.jar'])
     testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+task copyTask(type: Copy) {
+    from 'build/classes/main'
+    into 'robots'
+}
+
+build.doLast {
+    tasks.copyTask.execute()
+}
+
+task run(type: JavaExec, dependsOn: copyTask) {
+    classpath = sourceSets.main.runtimeClasspath
+    main ="robocode.Robocode"
 }
