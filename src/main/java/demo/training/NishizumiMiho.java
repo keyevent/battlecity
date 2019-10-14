@@ -11,11 +11,11 @@ import java.awt.*;
 // The gun turns at 20 degrees per tick
 // Radar turns 45 degrees per tick.
 // Unless you have a good reason, you should almost always use the setXXX() version when writing AdvancedRobots.
+// Two conflict set will end in a recombination behavior.
 public class NishizumiMiho extends AdvancedRobot {
     private double prevEnergy = 100;
     private double mvDirection = 1.0;
-    private double enemyDist = 200;
-    private double radarMv = 35;
+    private double radarMv = 45;
 
     @Override
     public void run() {
@@ -43,29 +43,29 @@ public class NishizumiMiho extends AdvancedRobot {
 
     @Override
     public void onScannedRobot(ScannedRobotEvent event) {
-        if (event.getDistance() >= 100) {
+        if (event.getDistance() >= 50) {
             tryEvade(event);
         }
         tryFire(event);
     }
 
     private void tryEvade(ScannedRobotEvent event) {
-        setTurnRight(event.getBearing() + 90 - 30 * mvDirection);
         double changeInEnergy = prevEnergy - event.getEnergy();
         if (changeInEnergy >= 0.1 && changeInEnergy <= 3) {
-            double randomDirection = Math.random() * 1.3 - 0.3;
+            double randomDirection = Math.random() * 0.6 + 0.7;
             if (mvDirection > 0) {
                 mvDirection = -randomDirection;
             } else {
                 mvDirection = randomDirection;
             }
+            setTurnRightRadians(event.getBearingRadians() + Math.PI / 2);
             moveWithWallDetection((event.getDistance() / 4 + 25) * mvDirection);
         }
         prevEnergy = event.getEnergy();
     }
 
     private void tryFire(ScannedRobotEvent event) {
-        enemyDist = event.getDistance();
+        double enemyDist = event.getDistance();
         radarMv = -radarMv;
         double bearingRadians = event.getBearingRadians();
         // Circle Movement
