@@ -1,11 +1,11 @@
-package demo.training;
+package fanjuncai;
+
 
 import robocode.*;
 
 import java.awt.*;
 
-public class MarkI extends AdvancedRobot {
-
+public class Ace extends AdvancedRobot{
 
     @Override
     public void onDeath(DeathEvent event) {
@@ -13,43 +13,28 @@ public class MarkI extends AdvancedRobot {
     }
 
     @Override
-    public void run() {
-        setBodyColor(new Color(220, 20, 60));
-        setGunColor(new Color(0, 150, 50));
-        setRadarColor(new Color(0, 100, 100));
-        setBulletColor(new Color(255, 255, 100));
+    public void run(){
+
+        setBodyColor(new Color(255, 200, 200));
+        setGunColor(new Color(255, 200, 200));
+        setRadarColor(new Color(255, 200, 200));
+        setBulletColor(new Color(255, 200, 200));
         setScanColor(new Color(255, 200, 200));
-        //
 
-        turnRadarLeft(Double.POSITIVE_INFINITY);
+        turnRight(90-this.getHeading());//direct to right
 
-        while (true) {
+            while(true){
 
-//            setAhead(5000);
-            execute();
-        }
-    }
+                ahead(100);
+                if(this.getWidth()<100||this.getBattleFieldWidth()-this.getWidth()<100)
+                    turnRight(90);
+                if(this.getHeight()<100||this.getBattleFieldHeight()-this.getHeight()<100)
+                    turnRight(90);
+                turnRadarLeftRadians(2*Math.PI);
+                turnRadarRightRadians(2*Math.PI);
+            }
 
-    @Override
-    public void onHitByBullet(HitByBulletEvent event) {
-        super.onHitByBullet(event);
-    }
-
-    @Override
-    public void onHitRobot(HitRobotEvent event) {
-
-        double bearing = event.getBearing();
-        if (Math.abs(bearing) < 90) {
-            out.println("mayday mayday, close combat, fire at will ");
-            fire(Rules.MAX_BULLET_POWER);
-        }
-        super.onHitRobot(event);
-    }
-
-    @Override
-    public void onHitWall(HitWallEvent event) {
-        super.onHitWall(event);
-    }
+}
 
     @Override
     public void onScannedRobot(ScannedRobotEvent event) {
@@ -79,4 +64,6 @@ public class MarkI extends AdvancedRobot {
         }
 
     }
+
+
 }
