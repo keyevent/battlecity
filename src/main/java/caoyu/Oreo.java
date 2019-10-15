@@ -25,6 +25,9 @@ public class Oreo extends AdvancedRobot {
         setScanColor(Color.white);
         setBulletColor(Color.white);
 
+        setAdjustRadarForGunTurn(false);
+        setAdjustRadarForRobotTurn(false);
+
         //white cane out of wall condition
         Condition whiteCaneOutOfBattlefieldCondition = new Condition("whiteCaneOutOfBattlefieldCondition", 11) {
             @Override
@@ -43,7 +46,7 @@ public class Oreo extends AdvancedRobot {
         // Loop forever
         while (true) {
             move();
-            turnGunRight(Double.POSITIVE_INFINITY); // Scans automatically
+            turnGunRight(turnMove); // Scans automatically
         }
     }
 
@@ -87,7 +90,6 @@ public class Oreo extends AdvancedRobot {
             setMaxTurnRate(Rules.MAX_TURN_RATE);
             turnHeading *= -1;
             turnRight(10);
-            turnGunRight(-10);
         }
     }
 }
