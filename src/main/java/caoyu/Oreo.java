@@ -16,6 +16,10 @@ public class Oreo extends AdvancedRobot {
 
     double diameter = 5;
 
+    //counter
+    int counter = 0;
+    int denominator = 300;
+
     @Override
     public void run() {
         // Set colors
@@ -82,6 +86,9 @@ public class Oreo extends AdvancedRobot {
         setMaxTurnRate(Rules.MAX_TURN_RATE / diameter);
         setAhead(robotHeading * move);
         setTurnRight(turnHeading * turnMove);
+        if (counter++ % denominator == 0) {
+            turnHeading *= -1;
+        }
     }
 
     @Override
