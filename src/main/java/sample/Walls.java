@@ -40,7 +40,7 @@ public class Walls extends Robot {
 		setScanColor(Color.cyan);
 
 		// Initialize moveAmount to the maximum possible for this battlefield.
-		moveAmount = Math.max(getBattleFieldWidth(), getBattleFieldHeight());
+		moveAmount = 2*Math.max(getBattleFieldWidth(), getBattleFieldHeight());
 		// Initialize peek to false
 		peek = false;
 
@@ -48,7 +48,7 @@ public class Walls extends Robot {
 		// getHeading() % 90 means the remainder of
 		// getHeading() divided by 90.
 		turnLeft(getHeading() % 90);
-		ahead(moveAmount);
+		ahead(moveAmount*2);
 		// Turn the gun to turn right 90 degrees.
 		peek = true;
 		turnGunRight(90);

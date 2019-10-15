@@ -31,7 +31,7 @@ public class MarkI extends AdvancedRobot {
 
     @Override
     public void onHitByBullet(HitByBulletEvent event) {
-        super.onHitByBullet(event);
+        turnLeft(90 - event.getBearing());
     }
 
     @Override
