@@ -5,8 +5,6 @@ import robocode.util.Utils;
 import dingziyuan.utils.Vector3;
 
 import java.awt.*;
-import java.awt.geom.Line2D;
-import java.awt.geom.RoundRectangle2D;
 
 
 public class DZYbot extends AdvancedRobot {
@@ -15,7 +13,6 @@ public class DZYbot extends AdvancedRobot {
         COUNTER_CLOCKWISE
     }
 
-    ;
     private Vector3 centerPos;
     private Vector3 enemyPos = new Vector3(0, 0, 0);
     private final int BORDER_WIDTH = 40;
@@ -165,14 +162,6 @@ public class DZYbot extends AdvancedRobot {
         g.setColor(Color.RED);
         g.drawString("target", (int) targetPoint.getX(), (int) targetPoint.getY());
         g.drawOval((int) targetPoint.getX(), (int) targetPoint.getY(), 2, 2);
-    }
-
-    public void onPaint(Graphics2D g, Vector3 delta, Vector3 target) {
-        g.setColor(Color.GREEN);
-        g.drawOval((int) delta.getX(), (int) delta.getY(), 2, 2);
-
-        g.setColor(Color.RED);
-        g.drawOval((int) target.getX(), (int) target.getY(), 2, 2);
     }
 
     private void shotHim(double distance, double bearing) {
