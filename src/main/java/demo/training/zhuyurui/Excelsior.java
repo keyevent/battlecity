@@ -4,13 +4,13 @@ import robocode.AdvancedRobot;
 import robocode.ScannedRobotEvent;
 
 import java.awt.*;
+import java.awt.geom.Point2D;
 
 public class Excelsior extends AdvancedRobot {
 
-    private double previousEnergy = 100;
-    private int movementDirection = 1;
-    private int gunDirection = 1;
     private int direction = 1;
+    enemyStatus enemy = new enemyStatus();
+    boolean target=false;
 
     private static final double DOUBLE_PI = (Math.PI * 2);
     private static final double HALF_PI = (Math.PI / 2);
@@ -22,6 +22,7 @@ public class Excelsior extends AdvancedRobot {
 
     @Override
     public void run() {
+        
         setBodyColor(Color.black);
         setGunColor(Color.black);
         setRadarColor(Color.yellow);
@@ -31,13 +32,57 @@ public class Excelsior extends AdvancedRobot {
 
 
         while (true) {
-            turnRightRadians(adjustHeading(0));
-            setAhead(100);
-            //setTurnRadarLeft(Double.POSITIVE_INFINITY);
+            if(!target){
+                setTurnRadarRightRadians(Double.POSITIVE_INFINITY);
+                execute();
+            }else{
+                doScan();
+                doMove();
+                doFire();
+                execute();
+            }
 
-            execute();
         }
 
+    }
+
+    private void doMove(){
+        turnRightRadians(adjustHeading(0));
+        setAhead(100);
+    }
+
+    private void doScan(){
+        double radar;
+        radar=normalizeRelAngle(enemy.direction=getHeadingRadians());
+        setTurnRadarRightRadians(radar*2);
+    }
+
+    private void doFire(){
+        double bPower=enemy.calcFirePower(enemy.energy);
+        double bVelocity=20-3*bPower;
+
+        double bHeading=enemy.headingRadian-enemy.preVelocity+0.001;
+
+        double r=enemy.velocity/bHeading;
+
+        double predictDirection=0D;
+        double eDistance=enemy.distance;
+
+        for (int i=0;i<4;i++){
+            double bFlyingTime=eDistance/bVelocity;
+            double preHeadingRadian=enemy.headingRadian+bHeading*bFlyingTime;
+            double predictX=enemy.x-r*Math.cos(preHeadingRadian)+Math.cos(enemy.headingRadian);
+            double predictY=enemy.y+r*Math.sin(preHeadingRadian)-Math.sin(enemy.headingRadian);
+            predictDirection=getAngle(getX(),getY(),predictX,predictY);
+
+            eDistance= Point2D.distance(getX(),getY(),predictX,predictY);
+
+        }
+        double gun=normalizeRelAngle(predictDirection-getGunHeadingRadians());
+        setTurnGunRightRadians(gun);
+        if(getGunHeat()==0){
+            setFire(bPower);
+        }
     }
 
     private double adjustHeading(double heading) {
@@ -67,8 +112,8 @@ public class Excelsior extends AdvancedRobot {
         }
         // Determine the safe heading and factor it in with the desired heading if the bot is near a wall
         if (nearWall) {
-            double dHeading = getDestinationHeading(x, y,
-                    getRelativeHeading(), desiredX, desiredY);
+            double dHeading = normalizeRelAngle(getAngle(x,y,desiredX,desiredY)-getRelativeHeading());
+
             //get the min distance
             double distanceToWall = Math.min(Math.min(x, (mapWidth - x)),
                     Math.min(y, (mapHeight - y)));
@@ -80,10 +125,11 @@ public class Excelsior extends AdvancedRobot {
         }
     }
 
-    private double getDestinationHeading(double sourceX, double sourceY, double sourceHeading, double targetX, double targetY) {
-        return normalizeRelAngle(
-                Math.atan2((targetX - sourceX), (targetY - sourceY)) - sourceHeading);
+
+    private double getAngle(double sourceX, double sourceY, double targetX, double targetY) {
+        return Math.atan2((targetX - sourceX), (targetY - sourceY));
     }
+
 
 
 
@@ -162,30 +208,45 @@ public class Excelsior extends AdvancedRobot {
 
     }
 
-    /**
-     * onScannedRobot: What to do when you see another robot
-     */
+
     @Override
-    public void onScannedRobot(ScannedRobotEvent e) {
-        // Stay at right angles to the opponent
-        setTurnRight(e.getBearing() + 90 - 30 * movementDirection);
-        fire(2);
-
-        // If the bot has small energy drop,
-        // assume it fired
-        double changeInEnergy = previousEnergy - e.getEnergy();
-        if (changeInEnergy > 0 && changeInEnergy <= 3) {
-            // Dodge!
-            movementDirection = -movementDirection;
-            setAhead((e.getDistance() / 4 + 25) * movementDirection);
-        }
-        // When a bot is spotted, sweep the gun and radar
-        gunDirection = -gunDirection;
-        setTurnGunRight(99999 * gunDirection);
-
-
-        // Track the energy level
-        previousEnergy = e.getEnergy();
+    public void onScannedRobot(ScannedRobotEvent e){
+        target=true;
+        enemy.updateStatus(e,this);
     }
+
+
+
+}
+
+class enemyStatus{
+    public double headingRadian=0D;
+    public double bearingRadian=0D;
+    public double distance=500D;
+    public double direction=0D;
+    public double x=0D;
+    public double y=0D;
+    public double velocity=0D;
+    public double preVelocity=0D;
+    public double preHeadingRadian=0D;
+    public double energy=100D;
+
+    public void updateStatus(ScannedRobotEvent e,AdvancedRobot bot){
+        preHeadingRadian=headingRadian;
+        preVelocity=velocity;
+        headingRadian=e.getHeadingRadians();
+        bearingRadian=e.getBearingRadians();
+        distance=e.getDistance();
+
+        direction=bearingRadian+bot.getHeadingRadians();
+        x=bot.getX()+Math.sin(direction)*distance;
+        y=bot.getY()+Math.cos(direction)*distance;
+    }
+
+    public double calcFirePower(double energy){
+        return Math.min(3,energy/4+0.1D);
+    }
+
+
 
 }
