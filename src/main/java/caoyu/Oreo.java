@@ -10,9 +10,11 @@ public class Oreo extends AdvancedRobot {
     int robotHeading = 1;
     int turnHeading = 1;
     int move = 10;
-    int whiteCaneLength = 50;
+    int turnMove = 10;
+    int whiteCaneLength = 70;
 
-    int diameter = 5;//用于设置最大转向速度
+
+    double diameter = 5;
 
     @Override
     public void run() {
@@ -23,14 +25,7 @@ public class Oreo extends AdvancedRobot {
         setScanColor(Color.white);
         setBulletColor(Color.white);
 
-
-        //set separated
-        //setAdjustGunForRobotTurn(false);
-        //setAdjustRadarForGunTurn(false);
-        //setAdjustRadarForRobotTurn(false);
-
-
-        //to close to wall condition
+        //white cane out of wall condition
         Condition whiteCaneOutOfBattlefieldCondition = new Condition("whiteCaneOutOfBattlefieldCondition", 11) {
             @Override
             public boolean test() {
@@ -48,7 +43,7 @@ public class Oreo extends AdvancedRobot {
         // Loop forever
         while (true) {
             move();
-            turnGunRight(10); // Scans automatically
+            turnGunRight(Double.POSITIVE_INFINITY); // Scans automatically
         }
     }
 
@@ -56,7 +51,7 @@ public class Oreo extends AdvancedRobot {
     public void onHitRobot(HitRobotEvent event) {
         if (event.isMyFault()) {
             setMaxTurnRate(Rules.MAX_TURN_RATE);
-            turnRight(90);
+            turnRight(45);
             robotHeading *= -1;
             turnHeading *= -1;
             move();
@@ -69,9 +64,9 @@ public class Oreo extends AdvancedRobot {
         double absoluteBearing = getHeading() + event.getBearing();
         double bearingFromGun = normalRelativeAngleDegrees(absoluteBearing - getGunHeading());
 
-        if (Math.abs(bearingFromGun) <= 4) {
+        if (Math.abs(bearingFromGun) <= 3) {
             turnGunRight(bearingFromGun);
-            if (event.getDistance() < 250) {
+            if (event.getDistance() < 300) {
                 setFire(400 / event.getDistance());
             }
         } else {
@@ -83,7 +78,7 @@ public class Oreo extends AdvancedRobot {
     void move() {
         setMaxTurnRate(Rules.MAX_TURN_RATE / diameter);
         setAhead(robotHeading * move);
-        setTurnRight(turnHeading * move);
+        setTurnRight(turnHeading * turnMove);
     }
 
     @Override
@@ -92,6 +87,7 @@ public class Oreo extends AdvancedRobot {
             setMaxTurnRate(Rules.MAX_TURN_RATE);
             turnHeading *= -1;
             turnRight(10);
+            turnGunRight(-10);
         }
     }
 }
