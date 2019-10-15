@@ -33,4 +33,5 @@ build.doLast {
 task run(type: JavaExec, dependsOn: copyTask) {
     classpath = sourceSets.main.runtimeClasspath
     main ="robocode.Robocode"
+    args '-battle', 'E:\\Code_Proj\\citi_training\\tank\\TEST_WithSpin.battle'
 }
