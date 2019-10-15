@@ -1,16 +1,18 @@
-package falcon;
+package lihaojie;
 
 import robocode.*;
+import robocode.util.Utils;
 
 import java.awt.*;
-import java.util.Random;
 
 import static robocode.util.Utils.normalRelativeAngleDegrees;
 
 public class falcon extends AdvancedRobot {
-    int tankLength=50;
-    double pi=3.141592653;
-    double dist =30;
+    int tankLength=150;
+    double pi=Math.PI;
+    double dist =70;
+    Enemy enemy = new Enemy();
+
     @Override
     public void onDeath(DeathEvent event) {
         super.onDeath(event);
@@ -49,48 +51,45 @@ public class falcon extends AdvancedRobot {
         setRadarColor(new Color(210, 200, 255));
         setBulletColor(new Color(255, 255, 100));
         setScanColor(new Color(255, 200, 25));
-        //
+
         double headDistance =5000;
-        setMaxVelocity(6);
         System.out.println("start game!");
+        setMaxVelocity(7);
 
+        setAdjustGunForRobotTurn( true );
+        setAdjustRadarForGunTurn( true );
         while (true) {
-            turnRadarLeft(500);
-            headDistance=20;
-            if (!avoidHitWall(headDistance,getX(),getY(),getHeadingRadians())){
-                //set
-                setMaxVelocity(8);
-                setMaxTurnRate(8);
-                setTurnRight(77);
-                setBack(100);
-                //waitFor(new TurnCompleteCondition(this));
-                continue;
+            if(enemy.name == null){
+                setTurnRadarRightRadians(2* pi*100);
+                System.out.println("get target");
+                execute();
+
             }
-            setMaxVelocity(8);
-            System.out.println("go ahead"+headDistance);
-            setAhead(headDistance);
+            else{
+                turnRadarLeft(600);
+                System.out.println("get null target");
+                execute();
+            }
 
-
-            //execute();
         }
     }
 
     @Override
     public void onHitByBullet(HitByBulletEvent event) {
         setTurnRight(normalRelativeAngleDegrees(90 - (getHeading() - event.getHeading())));
-
         ahead(dist);
         dist *= -1;
-        scan();
+        //scan();
     }
 
     @Override
     public void onHitRobot(HitRobotEvent event) {
 
         double turnGunAmt = normalRelativeAngleDegrees(event.getBearing() + getHeading() - getGunHeading());
-
         setTurnGunRight(turnGunAmt);
-        setFire(2.5);
+        setFire(3);
+        setTurnRight(event.getBearing());
+
     }
 
     @Override
@@ -103,11 +102,15 @@ public class falcon extends AdvancedRobot {
 
     @Override
     public void onScannedRobot(ScannedRobotEvent event) {
+        enemy.update(event,this);
+        double Offset = rectify( enemy.direction - getRadarHeadingRadians() );
+        setTurnRadarRightRadians( Offset * 2);
+
         double turnGunAmt = normalRelativeAngleDegrees(event.getBearing() + getHeading() - getGunHeading());
         setTurnGunRight(turnGunAmt);
         if (event.getDistance() < 50 && getEnergy() > 50) {
 
-            setFire(3);
+            setFire(2.5);
             //setFire(1);
         } // otherwise, fire 1.
         else if (event.getDistance() <150 ){
@@ -115,13 +118,33 @@ public class falcon extends AdvancedRobot {
             //setFire(0.5);
         }
         else {
-
             setFire(1);
         }
-        // Call scan again, before we turn the gun
-        scan();
-    }
 
+        //setTurnRadarRight(2.0 * Utils.normalRelativeAngleDegrees(getHeading() + event.getBearing() - getRadarHeading()));
+
+        // Call scan again, before we turn the gun
+        //scan();
+
+        double headDistance=100;
+        setAhead(headDistance);
+        //setTurnRadarRight(Double.POSITIVE_INFINITY);
+        if (!avoidHitWall(headDistance,getX(),getY(),Math.toRadians( getHeading()) /*getHeadingRadians()*/)){
+            setTurnRight(77);
+            setBack(50);
+            //waitFor(new TurnCompleteCondition(this));
+        }
+        //enemy=null;
+      //  System.out.println("go ahead"+headDistance);
+    }
+    public  double rectify ( double angle )
+    {
+        if ( angle < -Math.PI )
+            angle += 2*Math.PI;
+        if ( angle > Math.PI )
+            angle -= 2*Math.PI;
+        return angle;
+    }
     private void shotHim(double distance, double bearing) {
         if (distance < 10) {
             out.println("fire Rules.MAX_BULLET_POWER");
@@ -139,5 +162,30 @@ public class falcon extends AdvancedRobot {
             return;
         }
 
+    }
+
+}
+class Enemy {
+    public double x,y;
+    public String name = null;
+    public double headingRadian = 0.0D;
+    public double bearingRadian = 0.0D;
+    public double distance = 1000D;
+    public double direction = 0.0D;
+    public double velocity = 0.0D;
+    public double prevHeadingRadian = 0.0D;
+    public double energy = 100.0D;
+
+
+    public void update(ScannedRobotEvent e,AdvancedRobot me){
+        name = e.getName();
+        headingRadian = e.getHeadingRadians();
+        bearingRadian = e.getBearingRadians();
+        this.energy = e.getEnergy();
+        this.velocity = e.getVelocity();
+        this.distance = e.getDistance();
+        direction = bearingRadian + me.getHeadingRadians();
+        x = me.getX() + Math.sin( direction ) * distance;
+        y=  me.getY() + Math.cos( direction ) * distance;
     }
 }
