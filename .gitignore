@@ -1,0 +1,9 @@
+**/.classpath
+**/.project
+**/.settings/
+**/bin/
+**/build/
+**/out/
+**/.gradle/
+**/.idea/
+**/config/
