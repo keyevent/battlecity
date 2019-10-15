@@ -57,10 +57,10 @@ public class MarkI extends AdvancedRobot {
 //        setTurnRadarRight(event.getBearing());
         setTurnRight(bearing);
         setAhead(100);
-        shotHim(event.getDistance(), bearing);
+        shootHim(event.getDistance(), bearing);
     }
 
-    private void shotHim(double distance, double bearing) {
+    private void shootHim(double distance, double bearing) {
         if (distance < 10) {
             out.println("fire Rules.MAX_BULLET_POWER");
             fire(Rules.MAX_BULLET_POWER);
