@@ -6,14 +6,13 @@ import java.awt.*;
 
 import static robocode.util.Utils.normalRelativeAngleDegrees;
 
-public class NewOreo extends AdvancedRobot {
+public class Oreo extends AdvancedRobot {
     int robotHeading = 1;
     int turnHeading = 1;
     int move = 10;
-    int backFromWallMove = 40;
+    int whiteCaneLength = 50;
 
     int diameter = 5;//用于设置最大转向速度
-    int tooCloseThreshold = 30;
 
     @Override
     public void run() {
@@ -32,13 +31,17 @@ public class NewOreo extends AdvancedRobot {
 
 
         //to close to wall condition
-        Condition tooCloseToWallCondition = new Condition("tooCloseToWallCondition", 10) {
+        Condition whiteCaneOutOfBattlefieldCondition = new Condition("whiteCaneOutOfBattlefieldCondition", 11) {
             @Override
             public boolean test() {
-                return getX() < tooCloseThreshold || getX() > getBattleFieldWidth() - tooCloseThreshold || getY() < tooCloseThreshold || getY() > getBattleFieldHeight() - tooCloseThreshold;
+                double whiteCaneX =
+                        getX() + robotHeading * (whiteCaneLength * Math.sin((getHeading() / 360) * (2 * Math.PI)));
+                double whiteCaneY =
+                        getY() + robotHeading * (whiteCaneLength * Math.cos((getHeading() / 360) * (2 * Math.PI)));
+                return whiteCaneX < 0 || whiteCaneX > getBattleFieldWidth() || whiteCaneY < 0 || whiteCaneY > getBattleFieldHeight();
             }
         };
-        addCustomEvent(tooCloseToWallCondition);
+        addCustomEvent(whiteCaneOutOfBattlefieldCondition);
 
 
         setTurnGunRight(Double.POSITIVE_INFINITY);
@@ -85,27 +88,10 @@ public class NewOreo extends AdvancedRobot {
 
     @Override
     public void onCustomEvent(CustomEvent event) {
-        if ("tooCloseToWallCondition" == event.getCondition().getName()) {
-            double dFromCenterX = getBattleFieldWidth() / 2 - getX();
-            double dFromCenterY = getBattleFieldHeight() / 2 - getY();
-            double dist = Math.sqrt(dFromCenterX * dFromCenterX + dFromCenterY * dFromCenterY);
-            double sin = dFromCenterX / dist;
-            double cos = dFromCenterY / dist;
-            double asin = Math.asin(sin);
-            double angle;
-            if (cos >= 0) {
-                angle = (asin + 2 * Math.PI) % (2 * Math.PI);
-            } else {
-                angle = (-asin + Math.PI) % (2 * Math.PI);
-            }
-
+        if ("whiteCaneOutOfBattlefieldCondition" == event.getCondition().getName()) {
             setMaxTurnRate(Rules.MAX_TURN_RATE);
-            setTurnRight((angle / Math.PI) * 180 - getHeading());
-            setTurnGunRight(10);
-            setAhead(backFromWallMove);
-            execute();
-            turnHeading = 1;
-            robotHeading = 1;
+            turnHeading *= -1;
+            turnRight(10);
         }
     }
 }
