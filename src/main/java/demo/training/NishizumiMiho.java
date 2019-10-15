@@ -14,7 +14,7 @@ import java.awt.*;
 // Two conflict set will end in a recombination behavior.
 public class NishizumiMiho extends AdvancedRobot {
     private double prevEnergy = 100;
-    private double mvDirection = 1.0;
+    private double mvDistance = 1.0;
     private double radarMv = 45;
 
     @Override
@@ -25,11 +25,13 @@ public class NishizumiMiho extends AdvancedRobot {
         setBulletColor(new Color(57, 197, 187));
         setScanColor(new Color(57, 197, 187));
 
+        // This is the main loop, all onXXX call actually happens here.
         while (true) {
             turnRadarLeft(radarMv);
         }
     }
 
+    // TODO: Stuck in corner
     private void moveWithWallDetection(double move) {
         double heading = getHeadingRadians();
         double x = getX() + move * Math.sin(heading);
@@ -52,14 +54,10 @@ public class NishizumiMiho extends AdvancedRobot {
     private void tryEvade(ScannedRobotEvent event) {
         double changeInEnergy = prevEnergy - event.getEnergy();
         if (changeInEnergy >= 0.1 && changeInEnergy <= 3) {
-            double randomDirection = Math.random() * 0.6 + 0.7;
-            if (mvDirection > 0) {
-                mvDirection = -randomDirection;
-            } else {
-                mvDirection = randomDirection;
-            }
+            double randomDistance = Math.random() * 0.6 + 0.7;
+            mvDistance = mvDistance > 0 ? -randomDistance : randomDistance;
             setTurnRightRadians(event.getBearingRadians() + Math.PI / 2);
-            moveWithWallDetection((event.getDistance() / 4 + 25) * mvDirection);
+            moveWithWallDetection((event.getDistance() / 4 + 25) * mvDistance);
         }
         prevEnergy = event.getEnergy();
     }
@@ -68,8 +66,9 @@ public class NishizumiMiho extends AdvancedRobot {
         double enemyDist = event.getDistance();
         radarMv = -radarMv;
         double bearingRadians = event.getBearingRadians();
-        // Circle Movement
+        // Method tryEvade and tryFire call together will end in turn right double bearing.
         setTurnLeftRadians(Math.PI / 2 - bearingRadians);
+        // Method normalRelativeAngle normalizes an angle to a relative angle(-180~180)
         setTurnGunRightRadians(Utils.normalRelativeAngle(getHeadingRadians() + bearingRadians - getGunHeadingRadians()));
         setFire(400 / enemyDist);
     }
