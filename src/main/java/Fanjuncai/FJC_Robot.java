@@ -8,6 +8,7 @@ import java.awt.*;
 public class FJC_Robot extends AdvancedRobot{
 
 
+    private int count = 0;
     @Override
     public void onDeath(DeathEvent event) {
         super.onDeath(event);
@@ -25,9 +26,15 @@ public class FJC_Robot extends AdvancedRobot{
 
             while(true){
 
+                if(count == 5){
+                    setTurnLeft(90);
+                    goAhead(50);
+                    count=0;
+                }
                 doSan();
-                goAhead(100);
+                //goAhead(100);
                 execute();
+
             }
 
 }
@@ -39,15 +46,15 @@ public class FJC_Robot extends AdvancedRobot{
         double distance_width = Math.sin(this.getHeadingRadians())*distance;
         double distance_height = Math.cos(this.getHeadingRadians())*distance;
 
-        if(distance_height+y>20&&distance_height+y+20<MAX_HEIGHT
-        &&distance_width+x>20&&distance_width+x+20<MAX_WIDTH){
+        if(distance_height+y>100&&distance_height+y+100<MAX_HEIGHT
+        &&distance_width+x>100&&distance_width+x+100<MAX_WIDTH){
             setMaxVelocity(Rules.MAX_VELOCITY);
             setAhead(distance);
             return;
         }
         else {
             setMaxVelocity(Rules.MAX_VELOCITY);
-            setBack(100);
+            goBack(100);
             setTurnRight(90);
             return;
         }
@@ -62,15 +69,15 @@ public class FJC_Robot extends AdvancedRobot{
         double distance_width = Math.sin(this.getHeadingRadians())*distance;
         double distance_height = Math.cos(this.getHeadingRadians())*distance;
 
-        if(y-distance_height>20&&y-distance_height+20<MAX_HEIGHT
-                &&x-distance_width>20&&x-distance_width+20<MAX_WIDTH){
+        if(y-distance_height>100&&y-distance_height+100<MAX_HEIGHT
+                &&x-distance_width>100&&x-distance_width+100<MAX_WIDTH){
             setMaxVelocity(Rules.MAX_VELOCITY);
             setBack(distance);
             return;
         }
         else {
             setMaxVelocity(Rules.MAX_VELOCITY);
-            setAhead(100);
+            goAhead(100);
             setTurnRight(90);
             return;
         }
@@ -83,25 +90,23 @@ public class FJC_Robot extends AdvancedRobot{
     }
 
 
-    @Override
-    public void onScannedRobot(ScannedRobotEvent event) {
-            doFire(event);
-    }
 
     @Override
-    public void onHitByBullet(HitByBulletEvent e) {
-        super.onHitByBullet(e);
+    public void onScannedRobot(ScannedRobotEvent event) {
+        doFire(event);
     }
+
+
 
     @Override
     public void onHitRobot(HitRobotEvent event) {
         double bearing = event.getBearing();
         if (Math.abs(bearing) < 90) {
-            out.println("mayday mayday, close combat, fire at will ");
             fire(Rules.MAX_BULLET_POWER);
         }
         super.onHitRobot(event);
     }
+
 
     private void doFire(ScannedRobotEvent event){
         double b = getHeadingRadians() + event.getBearingRadians() - getGunHeadingRadians();
@@ -110,6 +115,10 @@ public class FJC_Robot extends AdvancedRobot{
         double shiftVelocity = event.getVelocity()*Math.cos(
                 getHeadingRadians()+event.getBearingRadians()+Math.PI/2-event.getHeadingRadians())
                 -getVelocity()*Math.sin(event.getBearingRadians());
+        if(Math.abs(bearing)==0){
+            setFire(3);
+            return;
+        }
         if(distance<15){
             setTurnRight(bearing);
             fire(3);
@@ -129,8 +138,9 @@ public class FJC_Robot extends AdvancedRobot{
         else{
 
             if(distance>200){
-                setTurnRight(bearing);
-                goAhead(150);
+                setTurnRight(bearing+30);
+                goAhead(100);
+                count++;
                 return;
             }
             else if (distance>100){
@@ -140,6 +150,7 @@ public class FJC_Robot extends AdvancedRobot{
                 setTurnRight(bearing);
                 goAhead(50);
                 execute();
+                count++;
                 return;
             }
 
