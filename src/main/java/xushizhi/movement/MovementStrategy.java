@@ -5,7 +5,7 @@ import robocode.ScannedRobotEvent;
 
 public interface MovementStrategy {
 
-    void move(final AdvancedRobot advancedRobot, final ScannedRobotEvent eSR);
+    void orbiting(final AdvancedRobot advancedRobot, final ScannedRobotEvent eSR);
 
     static double predictVelocity(final double distance) {
         if (distance > 20.0) {
@@ -31,4 +31,8 @@ public interface MovementStrategy {
         maxVelocity = Math.min(maxVelocity, predictVelocity(600.0 - y - 20.0));  // getBattleFieldHeight()
         return maxVelocity;
     }
+
+    double getMovement();
+
+    void setMovement(double newMovement);
 }

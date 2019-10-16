@@ -1,16 +1,17 @@
 package xushizhi.base;
 
-import robocode.AdvancedRobot;
-import robocode.HitWallEvent;
-import robocode.ScannedRobotEvent;
+import robocode.*;
 import robocode.util.Utils;
 import xushizhi.firing.FireControl;
 import xushizhi.movement.MovementStrategy;
+
+import java.awt.*;
 
 public abstract class RobotBase extends AdvancedRobot {
 
     private FireControl targeting;
     private MovementStrategy movement;
+    private static final double BASE_MOVEMENT = 180;
 
     RobotBase(final FireControl targeting, final MovementStrategy movement) {
         this.targeting = targeting;
@@ -18,6 +19,12 @@ public abstract class RobotBase extends AdvancedRobot {
     }
 
     public void run() {
+        setBodyColor(Color.BLUE);
+        setGunColor(Color.BLUE);
+        setBulletColor(Color.WHITE);
+        setRadarColor(Color.RED);
+        setScanColor(Color.YELLOW);
+
         this.setAdjustGunForRobotTurn(true);
         this.setAdjustRadarForGunTurn(true);
         this.setAdjustRadarForRobotTurn(true);
@@ -39,14 +46,27 @@ public abstract class RobotBase extends AdvancedRobot {
         final double absoluteRadarBearing = absoluteRobotBearing - this.getRadarHeadingRadians();
         double relativeRadarBearing = Utils.normalRelativeAngle(absoluteRadarBearing);
 
-        relativeRadarBearing += relativeRadarBearing / Math.abs(relativeRadarBearing) * (Math.PI / 9);
+        relativeRadarBearing += relativeRadarBearing / Math.abs(relativeRadarBearing) * (Math.PI / 30);
         this.setTurnRadarRightRadians(relativeRadarBearing);
 
         this.targeting.takeAim(this, eSR);
-        this.movement.move(this, eSR);
+        this.movement.orbiting(this, eSR);
     }
 
-    public void onHitWall(final HitWallEvent e) {
-        super.onHitWall(e);
+    // Hit wall event
+    public void onHitWall(final HitWallEvent eHW) {
+        if (Math.abs(movement.getMovement()) > BASE_MOVEMENT) {
+            this.movement.setMovement(BASE_MOVEMENT);
+        }
+    }
+
+    // Restart radar if the robot is dead
+    public void onRobotDeath(RobotDeathEvent eRD) {
+        setTurnRadarRightRadians(Math.PI * 4);
+    }
+
+    // Restart radar if the robot is hit by a bullet
+    public void onHitByBullet(HitByBulletEvent e) {
+        setTurnRadarRightRadians(Math.PI * 4);
     }
 }

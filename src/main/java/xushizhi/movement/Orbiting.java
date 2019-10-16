@@ -6,15 +6,16 @@ import robocode.util.Utils;
 
 public class Orbiting implements MovementStrategy {
 
-    private double ahead;  // Forward movement
+    private int ahead;  // Forward
+    private double movement;  // Forward movement
 
     public Orbiting() {
-        this.ahead = 1.0;
+        this.ahead = 1;
     }
 
     @Override
-    public void move(final AdvancedRobot advancedRobot, final ScannedRobotEvent eSR) {
-        if (Math.random() <= 0.05) {
+    public void orbiting(final AdvancedRobot advancedRobot, final ScannedRobotEvent eSR) {
+        if (Math.random() <= 0.1) {
             this.ahead *= -1;
         }
 
@@ -28,6 +29,17 @@ public class Orbiting implements MovementStrategy {
             advancedRobot.setTurnRightRadians(rightSpin);
         }
 
-        advancedRobot.setAhead(this.ahead * 20);  // Move forward
+        movement = this.ahead * 60;
+        advancedRobot.setAhead(movement);  // Move forward
+    }
+
+    @Override
+    public double getMovement() {
+        return this.movement;
+    }
+
+    @Override
+    public void setMovement(double newMovement) {
+        this.movement = newMovement;
     }
 }
