@@ -10,9 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Sensei extends AdvancedRobot {
-    private static Boolean hithithit = false;
-    private enemyState enemy = new enemyState();
+public class KuroSensei extends AdvancedRobot {
+    private static Boolean confirmHit = false;
+    private EnemyState enemy = new EnemyState();
 
     // Match Pattern
     private static final int MAX_PATTERN_LENGTH = 30;
@@ -27,8 +27,8 @@ public class Sensei extends AdvancedRobot {
     private static List<Point2D.Double> predictions = new ArrayList<Point2D.Double>();
 
     private static double movement;
-    private static final double BASE_MOVEMENT = 180;  // Set base movement to 180
-    private static final double BASE_TURN = Math.PI / 1.5;  // Set base turn degree to 120 degrees
+    private static final double BASE_MOVEMENT = 180;  // Set default movement to 180
+    private static final double BASE_TURN = Math.PI / 1.5;  // Set default turn radians to 120 degrees
 
     public void run() {
         setAdjustGunForRobotTurn(true);
@@ -49,51 +49,24 @@ public class Sensei extends AdvancedRobot {
             if (getDistanceRemaining() == 0) {
                 setAhead(movement = -movement);
                 setTurnRightRadians(BASE_TURN);
-                hithithit = false;
+                confirmHit = false;
             }
         } while (true);
     }
 
-    ////////////////////////////**EVENT**/////////////////////////////////////
-
-    public void onHitWall(HitWallEvent e) {
-        if (Math.abs(movement) > BASE_MOVEMENT) {
-            movement = BASE_MOVEMENT;
-        }
-    }
-
-    // Restart radar if the robot is dead
-    public void onRobotDeath(RobotDeathEvent e) {
-        setTurnRadarRight(400);
-    }
-
-    // Restart radar if the robot is hit by a bullet
-    public void onHitByBullet(HitByBulletEvent e) {
-        setTurnRadarRight(400);
-    }
-
-    // Turn the radar towards the enemy if got hit
-    public void onHitRobot(HitRobotEvent e) {
-        if (!hithithit) {
-            double absoluteBearing = e.getBearingRadians() + getHeadingRadians();
-            turnRadarRightRadians(Utils.normalRelativeAngle(absoluteBearing - getRadarHeadingRadians()));
-            hithithit = true;
-        }
-    }
-
     public void onScannedRobot(ScannedRobotEvent e) {
-        enemy.update(e, this);
+        enemy.update(this, e);
         // Fire if the gun doesn't change angle
         if (getGunTurnRemaining() == 0 && getEnergy() > 1) {
             smartFire();
         }
-        trackHim();
+        tracking();
 
-        if (enemy.thisStep == (char) -1) {
+        if (enemy.currStep == (char) -1) {
             return;
         }
-        record(enemy.thisStep);
-        enemyHistory = (char) enemy.thisStep + enemyHistory;
+        record(enemy.currStep);
+        enemyHistory = (char) enemy.currStep + enemyHistory;
 
         predictions.clear();
         // My Pos & Enemy Pos
@@ -114,7 +87,31 @@ public class Sensei extends AdvancedRobot {
         setTurnGunRightRadians(Utils.normalRelativeAngle(gunTurn));
     }
 
-    ////////////////////////////////**MYFUNCTION**/////////////////////////////
+    public void onHitWall(HitWallEvent e) {
+        if (Math.abs(movement) > BASE_MOVEMENT) {
+            movement = BASE_MOVEMENT;
+        }
+    }
+
+    // Restart radar if the robot is dead
+    public void onRobotDeath(RobotDeathEvent e) {
+        setTurnRadarRightRadians(Math.PI * 4);
+    }
+
+    // Restart radar if the robot is hit by a bullet
+    public void onHitByBullet(HitByBulletEvent e) {
+        setTurnRadarRightRadians(Math.PI * 4);
+    }
+
+    // Turn the radar towards the enemy if got hit
+    public void onHitRobot(HitRobotEvent e) {
+        if (!confirmHit) {
+            final double absoluteBearing = e.getBearingRadians() + getHeadingRadians();
+            final double absoluteRadarBearing = absoluteBearing - getRadarHeadingRadians();
+            turnRadarRightRadians(Utils.normalRelativeAngle(absoluteRadarBearing));
+            confirmHit = true;
+        }
+    }
 
     private void smartFire() {
         FIRE_POWER = Math.min(Math.min(getEnergy() / 6d, 1000d / enemy.distance), enemy.energy / 3d);
@@ -122,24 +119,20 @@ public class Sensei extends AdvancedRobot {
         setFire(FIRE_POWER);
     }
 
-    private void trackHim() {
+    private void tracking() {
         double RadarOffset;
         RadarOffset = Utils.normalRelativeAngle(enemy.absoluteBearing - getRadarHeadingRadians());
         setTurnRadarRightRadians(RadarOffset * 1.2);
     }
 
-    private void record(int thisStep) {
+    private void record(int currStep) {
         int maxLength = Math.min(MAX_PATTERN_LENGTH, enemyHistory.length());
         for (int i = 0; i <= maxLength; ++i) {
             String pattern = enemyHistory.substring(0, i);
-            int[] frequencies = matcher.get(pattern);
+            int[] frequencies = matcher.computeIfAbsent(pattern, k -> new int[21 * 17]);
 
-            if (frequencies == null) {
-                // frequency tables need to hold 21 possible dh values times 17 possible v values
-                frequencies = new int[21 * 17];
-                matcher.put(pattern, frequencies);
-            }
-            ++frequencies[thisStep];
+            // Frequency table needs to hold 21 possible dh values * 17 possible v values
+            ++frequencies[currStep];
         }
     }
 
@@ -148,6 +141,7 @@ public class Sensei extends AdvancedRobot {
         for (int patternLength = Math.min(pattern.length(), MAX_PATTERN_LENGTH); frequencies == null; --patternLength) {
             frequencies = matcher.get(pattern.substring(0, patternLength));
         }
+
         int nextTick = 0;
         for (int i = 1; i < frequencies.length; ++i) {
             if (frequencies[nextTick] < frequencies[i]) {
@@ -161,52 +155,5 @@ public class Sensei extends AdvancedRobot {
         double x = p.x + distance * Math.sin(angle);
         double y = p.y + distance * Math.cos(angle);
         return new Point2D.Double(x, y);
-    }
-}
-
-//////////////////////**ENEMY_CLASS**///////////////////////////////////////
-
-class enemyState {
-    public double headingRadian = 0.0D;
-    public double bearingRadian = 0.0D;
-    public double distance = 0.0D;
-    public double absoluteBearing = 0.0D;
-    public double x = 0.0D;
-    public double y = 0.0D;
-    public double velocity = 0.0D;
-    public double energy = 100.0D;
-
-    public double lastEnemyHeading = 0;
-    public int thisStep = 0;
-
-    //the currently data is important, we should get it when we use it.
-    public void update(ScannedRobotEvent e, AdvancedRobot me) {
-        headingRadian = e.getHeadingRadians();
-        bearingRadian = e.getBearingRadians();
-        distance = e.getDistance();
-        absoluteBearing = bearingRadian + me.getHeadingRadians();
-        x = me.getX() + Math.sin(absoluteBearing) * distance;
-        y = me.getY() + Math.cos(absoluteBearing) * distance;
-        velocity = e.getVelocity();
-        energy = e.getEnergy();
-        //addition
-        thisStep = encode(headingRadian - lastEnemyHeading, velocity);
-        lastEnemyHeading = headingRadian;
-    }
-
-    public static int encode(double dh, double v) {
-        if (Math.abs(dh) > Rules.MAX_TURN_RATE_RADIANS) {
-            return (char) -1;
-        }
-        // -10 < toDegrees(dh) < 10 ; -8 < v < 8 ;
-        // Add with 10 and 8
-        int dhCode = (int) Math.rint(Math.toDegrees(dh)) + 10;
-        int vCode = (int) Math.rint(v + 8);
-        return (char) (17 * dhCode + vCode);
-    }
-
-    public void decode(int symbol) {
-        headingRadian += Math.toRadians(symbol / 17 - 10);
-        velocity = symbol % 17 - 8;
     }
 }
