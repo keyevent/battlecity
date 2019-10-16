@@ -8,9 +8,12 @@ public class lym extends AdvancedRobot {
     private int gunDirection = 1;
     private int direction = 1;
 
-    /**
-     * run: Aldis's default behavior
-     */
+    private static final double DOUBLE_PI = (Math.PI * 2);
+    private static final double HALF_PI = (Math.PI / 2);
+    private static final double WALL_AVOID_INTERVAL = 10;
+    private static final double WALL_AVOID_FACTORS = 50;
+    private static final double WALL_AVOID_DISTANCE = (WALL_AVOID_INTERVAL * WALL_AVOID_FACTORS);
+
     public void run() {
         while (true) {
             setTurnRightRadiansOptimal(adjustHeadingForWalls(0));
@@ -19,11 +22,6 @@ public class lym extends AdvancedRobot {
         }
     }
 
-    private static final double DOUBLE_PI = (Math.PI * 2);
-    private static final double HALF_PI = (Math.PI / 2);
-    private static final double WALL_AVOID_INTERVAL = 10;
-    private static final double WALL_AVOID_FACTORS = 20;
-    private static final double WALL_AVOID_DISTANCE = (WALL_AVOID_INTERVAL * WALL_AVOID_FACTORS);
 
     public double calculateBearingToXYRadians(double sourceX, double sourceY,
                                               double sourceHeading, double targetX, double targetY) {
@@ -146,9 +144,7 @@ public class lym extends AdvancedRobot {
         setTurnRightRadians(turn);
     }
 
-    /**
-     * onScannedRobot: What to do when you see another robot
-     */
+
     public void onScannedRobot(ScannedRobotEvent e) {
         fire(2);
         setTurnRight(e.getBearing() + 90 - 30 * movementDirection);
@@ -160,7 +156,7 @@ public class lym extends AdvancedRobot {
         }
 
         gunDirection = -gunDirection;
-        setTurnGunRight(99999 * gunDirection);
+        setTurnGunRight(100000 * gunDirection);
 
         previousEnergy = e.getEnergy();
     }
