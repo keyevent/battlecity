@@ -2,6 +2,7 @@ package Fanjuncai;
 
 
 import robocode.*;
+import robocode.util.Utils;
 
 import java.awt.*;
 
@@ -9,6 +10,7 @@ public class FJC_Robot extends AdvancedRobot{
 
 
     private int count = 0;
+
     @Override
     public void onDeath(DeathEvent event) {
         super.onDeath(event);
@@ -23,6 +25,11 @@ public class FJC_Robot extends AdvancedRobot{
         setBulletColor(new Color(255, 200, 200));
         setScanColor(new Color(255, 200, 200));
 
+        double offsetX = getBattleFieldWidth()/2 - getX();
+        double offsetY = getBattleFieldHeight()/2 - getY();
+        double centralBearing = Math.atan(offsetX/offsetY);
+        turnRightRadians(centralBearing-getHeadingRadians());
+        ahead(100);
 
             while(true){
 
@@ -32,13 +39,12 @@ public class FJC_Robot extends AdvancedRobot{
                     count=0;
                 }
                 doSan();
-                //goAhead(100);
                 execute();
-
             }
 
 }
     private void goAhead(double distance){
+
         double x = getX();
         double y = getY();
         double MAX_HEIGHT = this.getBattleFieldHeight();
@@ -54,7 +60,7 @@ public class FJC_Robot extends AdvancedRobot{
         }
         else {
             setMaxVelocity(Rules.MAX_VELOCITY);
-            goBack(100);
+            goBack(50);
             setTurnRight(90);
             return;
         }
@@ -62,6 +68,7 @@ public class FJC_Robot extends AdvancedRobot{
     }
 
     private void goBack(double distance){
+
         double x = getX();
         double y = getY();
         double MAX_HEIGHT = this.getBattleFieldHeight();
@@ -77,7 +84,7 @@ public class FJC_Robot extends AdvancedRobot{
         }
         else {
             setMaxVelocity(Rules.MAX_VELOCITY);
-            goAhead(100);
+            goAhead(50);
             setTurnRight(90);
             return;
         }
@@ -109,6 +116,8 @@ public class FJC_Robot extends AdvancedRobot{
 
 
     private void doFire(ScannedRobotEvent event){
+        // lock the radar
+        setTurnRadarRightRadians(Utils.normalRelativeAngle((event.getBearingRadians() + getHeadingRadians() -getRadarHeadingRadians()))*2);
         double b = getHeadingRadians() + event.getBearingRadians() - getGunHeadingRadians();
         double bearing = event.getBearing();
         double distance = event.getDistance();
@@ -184,7 +193,6 @@ public class FJC_Robot extends AdvancedRobot{
 
         }
     }
-
 
 
 }
