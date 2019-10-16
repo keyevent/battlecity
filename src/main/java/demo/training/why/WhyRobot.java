@@ -4,6 +4,8 @@ import robocode.*;
 
 import java.util.Random;
 
+import static robocode.util.Utils.normalRelativeAngleDegrees;
+
 public class WhyRobot extends AdvancedRobot {
     private double fieldWidth;
     private double fieldHeight;
@@ -22,13 +24,11 @@ public class WhyRobot extends AdvancedRobot {
         setAdjustRadarForGunTurn( true );
         setMaxVelocity(8);
         while (true){
+            setTurnRadarRightRadians(2*Math.PI);
             if(enemy.name == null){
-                setTurnRadarRightRadians(2*Math.PI);
                 execute();
             }
             else{
-                //setTurnRadarRightRadians(2*Math.PI);
-                System.out.printf("before execute x is %f,y is %f\n",getX(),getY());
                 execute();
             }
         }
@@ -53,12 +53,12 @@ public class WhyRobot extends AdvancedRobot {
     }
 
     private boolean isSafeMove(double x,double y,double direction,double length){
-        double max=Math.sqrt(robotWidth*robotWidth+robotHeight*robotHeight)/2+30;
-
+        double max=Math.sqrt(robotWidth*robotWidth+robotHeight*robotHeight)/2+10;
         x+=length*Math.sin(Math.toRadians(direction));
         y+=length*Math.cos(Math.toRadians(direction));
 
         if (x>max&&x<fieldWidth-max&&y>max&&y<fieldHeight-max){
+            System.out.printf("moving to (%f,%f)\n",x,y);
             return true;
         }
         return false;
@@ -69,11 +69,11 @@ public class WhyRobot extends AdvancedRobot {
     public void onScannedRobot(ScannedRobotEvent event) {
 
         //--------------------跟踪代码2
+//        enemy.update(event,this);
+//        double Offset = rectify( enemy.direction - getRadarHeadingRadians());
+//        setTurnRadarRightRadians( Offset * 2);
         enemy.update(event,this);
-        double Offset = rectify( enemy.direction - getRadarHeadingRadians());
-        setTurnRadarRightRadians( Offset * 1.5);
-
-        double length=200;
+        double length=100;
         double enemyPosition = event.getBearing()+getHeading();//enemy position
         fireInAdvance(enemy);
         dogging(enemyPosition+180,length);
@@ -108,11 +108,17 @@ public class WhyRobot extends AdvancedRobot {
     }
 
 
+    private void myMoveAhead(double move) {
+        while (!isSafeMove(getX(),getY(),getHeading(),move))move-=5;
+        setAhead(move);
+    }
+
+
     private double getPowerByDistance(double distance){
-        if (distance<100)return 3;
-        else if (distance<200)return 2;
-        else if (distance<300) return 1;
-        else return 0.5;
+        if (distance<200)return 3;
+        else if (distance<400)return 2;
+        else return 1;
+        //return 3;
     }
     /**
      *
@@ -120,7 +126,7 @@ public class WhyRobot extends AdvancedRobot {
      * @param length the length to move
      */
     private void dogging(double doggingDirection,double length){
-        System.out.printf("in dogging x is %f,y is %f\n",getX(),getY());
+        System.out.printf("moving from (%f,%f)\n",getX(),getY());
         double turnHeading=doggingDirection-90;
         if (isSafeMove(getX(),getY(),turnHeading,length)){
             turnHeading=turnHeading;
@@ -134,15 +140,16 @@ public class WhyRobot extends AdvancedRobot {
             turnHeading=turnHeading-45;
         }else if (isSafeMove(getX(),getY(),turnHeading-135,length)){
             turnHeading=turnHeading-135;
-        }else  throw new RuntimeException();
+        }else  {
+            System.out.println("something wrong ,the doggineDirection is "+doggingDirection);
+            throw new RuntimeException();
+        }
         turnHeading=turnHeading-getHeading();
         turnHeading%=360;
         if (turnHeading<0)turnHeading+=360;
-
         if (turnHeading<180)setTurnRight(turnHeading);
         else setTurnLeft(360-turnHeading);
-
-        setAhead(length);
+        myMoveAhead(length);
     }
 
     public  double rectify ( double angle )
@@ -158,6 +165,11 @@ public class WhyRobot extends AdvancedRobot {
     public void onHitWall(HitWallEvent event) {
         System.out.println("撞墙了-----------");
         System.out.println("x="+getX()+", y="+getY());
+    }
+
+    @Override
+    public void onHitRobot(HitRobotEvent event) {
+        super.onHitRobot(event);
     }
 
     @Override
